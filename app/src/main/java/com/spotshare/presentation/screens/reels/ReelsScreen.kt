@@ -20,6 +20,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.spotshare.domain.model.Reel
 import com.spotshare.presentation.theme.SpotShareTheme
 
+/**
+ * Full-screen Reels experience using Media3 ExoPlayer.
+ * Supports vertical scrolling and interactive action overlays.
+ */
 @Composable
 fun ReelsScreen(
     onBackClick: () -> Unit,
