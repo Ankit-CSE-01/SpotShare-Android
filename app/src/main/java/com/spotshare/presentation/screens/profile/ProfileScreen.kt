@@ -38,6 +38,10 @@ import com.spotshare.presentation.theme.SpotShareTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 
+/**
+ * Comprehensive Profile Screen.
+ * Features stats, bio, highlights, and 4-tab content pager.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
