@@ -72,7 +72,9 @@ class ChatRepositoryImpl @Inject constructor(
                         senderName = doc.getString("senderName") ?: "",
                         text = doc.getString("text") ?: "",
                         mediaUrl = doc.getString("mediaUrl"),
-                        mediaType = doc.getString("mediaType")?.let { MediaType.valueOf(it) },
+                        mediaType = doc.getString("mediaType")?.let { 
+                            try { MediaType.valueOf(it) } catch(e: Exception) { null } 
+                        },
                         timestamp = doc.getLong("timestamp") ?: 0L,
                         isRead = doc.getBoolean("isRead") ?: false
                     )
@@ -106,6 +108,9 @@ class ChatRepositoryImpl @Inject constructor(
                 .document(messageId)
                 .set(messageData)
                 .await()
+                
+            // Update last message in chat summary for both users
+            // (Implementation would go here in a full app)
                 
             Result.success(Unit)
         } catch (e: Exception) {

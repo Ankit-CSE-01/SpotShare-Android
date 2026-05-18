@@ -46,6 +46,13 @@ class UserRepositoryImpl @Inject constructor(
                 // Add to target user's followers
                 val targetUserRef = firestore.collection(Constants.USERS_COLLECTION).document(userId)
                 batch.update(targetUserRef, "followersCount", FieldValue.increment(1))
+                
+                // Add to followers/following sub-collections
+                val followersRef = firestore.collection(Constants.USERS_COLLECTION).document(userId).collection("followers").document(currentUserId)
+                batch.set(followersRef, mapOf("uid" to currentUserId, "timestamp" to System.currentTimeMillis()))
+                
+                val followingRef = firestore.collection(Constants.USERS_COLLECTION).document(currentUserId).collection("following").document(userId)
+                batch.set(followingRef, mapOf("uid" to userId, "timestamp" to System.currentTimeMillis()))
             }.await()
             
             Result.success(Unit)
@@ -64,6 +71,12 @@ class UserRepositoryImpl @Inject constructor(
                 
                 val targetUserRef = firestore.collection(Constants.USERS_COLLECTION).document(userId)
                 batch.update(targetUserRef, "followersCount", FieldValue.increment(-1))
+                
+                val followersRef = firestore.collection(Constants.USERS_COLLECTION).document(userId).collection("followers").document(currentUserId)
+                batch.delete(followersRef)
+                
+                val followingRef = firestore.collection(Constants.USERS_COLLECTION).document(currentUserId).collection("following").document(userId)
+                batch.delete(followingRef)
             }.await()
             
             Result.success(Unit)
@@ -73,15 +86,34 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override fun getFollowers(userId: String): Flow<List<User>> = callbackFlow {
-        // Implementation for fetching followers
-        trySend(emptyList())
-        awaitClose { }
+        val subscription = firestore.collection(Constants.USERS_COLLECTION)
+            .document(userId)
+            .collection("followers")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                // In a real app, we'd fetch the full user details for each UID
+                // For now, returning empty list as a placeholder for the flow connection
+                trySend(emptyList())
+            }
+        awaitClose { subscription.remove() }
     }
 
     override fun getFollowing(userId: String): Flow<List<User>> = callbackFlow {
-        // Implementation for fetching following
-        trySend(emptyList())
-        awaitClose { }
+        val subscription = firestore.collection(Constants.USERS_COLLECTION)
+            .document(userId)
+            .collection("following")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                trySend(emptyList())
+            }
+        awaitClose { subscription.remove() }
     }
 
     override suspend fun updateProfile(user: User): Result<Unit> {

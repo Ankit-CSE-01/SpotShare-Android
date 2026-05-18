@@ -128,7 +128,9 @@ fun NavGraph(
             MediaPickerScreen(
                 onBackClick = { navController.popBackStack() },
                 onMediaSelected = { uris ->
-                    // Logic to pass uris back to CreatePost or ViewModel
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("selected_media", uris.map { it.toString() })
                     navController.popBackStack()
                 }
             )
@@ -232,6 +234,24 @@ fun NavGraph(
         composable(route = Screen.Notifications.route) {
             NotificationScreen(
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.SocialList.route,
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("tab") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            val tab = backStackEntry.arguments?.getInt("tab") ?: 0
+            SocialListScreen(
+                username = "Explorer", 
+                initialTab = tab,
+                onBackClick = { navController.popBackStack() },
+                onUserClick = { targetId ->
+                    navController.navigate(Screen.Profile.createRoute(targetId))
+                }
             )
         }
         composable(

@@ -31,35 +31,23 @@ class TravelViewModel @Inject constructor(
     }
     
     fun loadTravelImages() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val response = pexelsApi.searchPhotos(
-                    apiKey = apiKey,
-                    query = "travel destinations",
-                    perPage = 30
-                )
-                _travelImages.value = response.photos
-            } catch (e: Exception) {
-                Log.e("TravelViewModel", "Error loading images", e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
+        searchImages("travel destinations")
     }
     
     fun searchImages(query: String) {
+        if (query.isBlank()) return
+        
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val response = pexelsApi.searchPhotos(
                     apiKey = apiKey,
                     query = query,
-                    perPage = 30
+                    perPage = 40
                 )
                 _travelImages.value = response.photos
             } catch (e: Exception) {
-                Log.e("TravelViewModel", "Error searching images", e)
+                Log.e("TravelViewModel", "Error searching images for $query", e)
             } finally {
                 _isLoading.value = false
             }

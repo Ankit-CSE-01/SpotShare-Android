@@ -113,6 +113,7 @@ fun ProfileContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(bottom = 16.dp) // Added bottom padding for better scroll end
                 .verticalScroll(rememberScrollState())
         ) {
             // Header: Image + Stats

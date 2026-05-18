@@ -1,6 +1,7 @@
 package com.spotshare.presentation.screens.create
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
@@ -9,8 +10,7 @@ import com.spotshare.domain.model.MediaType
 import com.spotshare.domain.model.Post
 import com.spotshare.domain.repository.PostRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -18,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateViewModel @Inject constructor(
     private val postRepository: PostRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _selectedMedia = MutableStateFlow<List<SelectedMedia>>(emptyList())
@@ -27,8 +28,21 @@ class CreateViewModel @Inject constructor(
     private val _isUploading = MutableStateFlow(false)
     val isUploading = _isUploading.asStateFlow()
 
+    init {
+        // Observe selected media from MediaPicker via SavedStateHandle
+        savedStateHandle.getStateFlow<List<String>?>("selected_media", null)
+            .onEach { uris ->
+                uris?.forEach { uriString ->
+                    addMedia(Uri.parse(uriString), MediaType.IMAGE)
+                }
+                // Clear after processing
+                savedStateHandle["selected_media"] = null
+            }
+            .launchIn(viewModelScope)
+    }
+
     fun addMedia(uri: Uri, type: MediaType) {
-        if (_selectedMedia.value.size < 5) {
+        if (_selectedMedia.value.size < 5 && _selectedMedia.value.none { it.uri == uri }) {
             _selectedMedia.value += SelectedMedia(uri, type)
         }
     }
