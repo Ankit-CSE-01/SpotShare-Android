@@ -23,6 +23,11 @@ class AuthViewModel @Inject constructor(
     val authState = _authState.asStateFlow()
 
     fun login(email: String, pass: String) {
+        // Basic validation before Firebase attempt
+        if (email.isBlank() || pass.isBlank()) {
+            _authState.value = AuthState.Error("Email and Password cannot be empty")
+            return
+        }
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
