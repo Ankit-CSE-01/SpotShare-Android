@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">SpotShare</string>
+    <string name="title_home">Home</string>
+    <string name="title_map">Map</string>
+    <string name="title_add_spot">Add Spot</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_settings">Settings</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="search_placeholder">Search hidden spots...</string>
+    <string name="get_directions">Get Directions</string>
+    <string name="share">Share</string>
+    <string name="logout">Logout</string>
+    <string name="save">Save</string>
+    <string name="default_web_client_id" translatable="false">DUMMY_CLIENT_ID</string>
+</resources>

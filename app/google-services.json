@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "94816297331",
+    "project_id": "spotshare-76887",
+    "storage_bucket": "spotshare-76887.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:94816297331:android:2cc07a8803262f00502506",
+        "android_client_info": {
+          "package_name": "com.spotshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "94816297331-or85g7rg5aimd8443ba8roh55uegdo13.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.spotshare",
+            "certificate_hash": "d524a01fd78a73da7a8073213959b511059cd7cd"
+          }
+        },
+        {
+          "client_id": "94816297331-9dgvsh35qu060rco81u4v8rvkbim7no4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgo_oZqXk0oVQfnbmcKiv-IH6lOIKY3NQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "94816297331-9dgvsh35qu060rco81u4v8rvkbim7no4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
