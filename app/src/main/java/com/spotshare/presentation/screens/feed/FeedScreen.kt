@@ -27,6 +27,10 @@ import com.spotshare.presentation.theme.SpotShareTheme
 import com.spotshare.util.IntentHelper
 import kotlinx.coroutines.launch
 
+/**
+ * Main Feed Screen representing the Home tab.
+ * Displays Instagram-style posts and stories using Pexels API.
+ */
 @Composable
 fun FeedScreen(
     onNotificationsClick: () -> Unit,
