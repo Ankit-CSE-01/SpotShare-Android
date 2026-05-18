@@ -6,6 +6,10 @@ import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
+/**
+ * SpotShare Application class.
+ * Initializes Hilt Dependency Injection and WorkManager configuration.
+ */
 @HiltAndroidApp
 class SpotShareApplication : Application(), Configuration.Provider {
 
