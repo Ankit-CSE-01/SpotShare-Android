@@ -27,6 +27,10 @@ import com.spotshare.presentation.components.SpotCard
 import com.spotshare.presentation.theme.SpotShareTheme
 import kotlinx.coroutines.launch
 
+/**
+ * Map Screen for location-based discovery.
+ * Integrates Google Maps with marker clustering.
+ */
 @Composable
 fun MapScreen(
     onSpotClick: (String) -> Unit,
