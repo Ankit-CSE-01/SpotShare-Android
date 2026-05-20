@@ -1,6 +1,7 @@
 package com.spotshare.data.repository
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.spotshare.data.local.dao.MessageDao
@@ -91,6 +92,7 @@ class ChatRepositoryImpl @Inject constructor(
             val userId = auth.currentUser?.uid ?: return Result.failure(Exception("Not logged in"))
             val userName = auth.currentUser?.displayName ?: "User"
             val messageId = UUID.randomUUID().toString()
+            val timestamp = System.currentTimeMillis()
             
             val messageData = hashMapOf(
                 "id" to messageId,
@@ -98,10 +100,11 @@ class ChatRepositoryImpl @Inject constructor(
                 "senderId" to userId,
                 "senderName" to userName,
                 "text" to text,
-                "timestamp" to System.currentTimeMillis(),
+                "timestamp" to timestamp,
                 "isRead" to false
             )
             
+            // 1. Add message to the central messages collection
             firestore.collection("chats")
                 .document(chatId)
                 .collection("messages")
@@ -109,10 +112,98 @@ class ChatRepositoryImpl @Inject constructor(
                 .set(messageData)
                 .await()
                 
-            // Update last message in chat summary for both users
-            // (Implementation would go here in a full app)
+            // 2. Update chat summary for sender
+            firestore.collection(Constants.USERS_COLLECTION)
+                .document(userId)
+                .collection("chats")
+                .document(chatId)
+                .update(
+                    "lastMessage", text,
+                    "lastMessageTime", timestamp
+                ).await()
+
+            // 3. Update chat summary for receiver (get otherUserId first)
+            val chatDoc = firestore.collection(Constants.USERS_COLLECTION)
+                .document(userId)
+                .collection("chats")
+                .document(chatId)
+                .get()
+                .await()
+            
+            val otherUserId = chatDoc.getString("otherUserId")
+            if (otherUserId != null) {
+                firestore.collection(Constants.USERS_COLLECTION)
+                    .document(otherUserId)
+                    .collection("chats")
+                    .document(chatId)
+                    .update(
+                        "lastMessage", text,
+                        "lastMessageTime", timestamp,
+                        "unreadCount", FieldValue.increment(1)
+                    ).await()
+            }
                 
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getOrCreateChat(otherUserId: String): Result<String> {
+        return try {
+            val currentUserId = auth.currentUser?.uid ?: return Result.failure(Exception("Not logged in"))
+            
+            // Deterministic chat ID for 1-to-1 chats
+            val chatId = if (currentUserId < otherUserId) "${currentUserId}_$otherUserId" else "${otherUserId}_$currentUserId"
+            
+            val chatRef = firestore.collection(Constants.USERS_COLLECTION)
+                .document(currentUserId)
+                .collection("chats")
+                .document(chatId)
+            
+            val chatSnapshot = chatRef.get().await()
+            
+            if (!chatSnapshot.exists()) {
+                // Fetch other user's info to create summaries
+                val otherUserDoc = firestore.collection(Constants.USERS_COLLECTION).document(otherUserId).get().await()
+                val otherUserName = otherUserDoc.getString("userName") ?: "User"
+                val otherUserProfilePic = otherUserDoc.getString("profilePicUrl")
+                
+                val currentUserDoc = firestore.collection(Constants.USERS_COLLECTION).document(currentUserId).get().await()
+                val currentUserName = currentUserDoc.getString("userName") ?: "User"
+                val currentUserProfilePic = currentUserDoc.getString("profilePicUrl")
+
+                val batch = firestore.batch()
+                
+                // Summary for current user
+                batch.set(chatRef, mapOf(
+                    "otherUserId" to otherUserId,
+                    "otherUserName" to otherUserName,
+                    "otherUserProfilePic" to otherUserProfilePic,
+                    "lastMessage" to "",
+                    "lastMessageTime" to System.currentTimeMillis(),
+                    "unreadCount" to 0
+                ))
+                
+                // Summary for other user
+                val otherChatRef = firestore.collection(Constants.USERS_COLLECTION)
+                    .document(otherUserId)
+                    .collection("chats")
+                    .document(chatId)
+                
+                batch.set(otherChatRef, mapOf(
+                    "otherUserId" to currentUserId,
+                    "otherUserName" to currentUserName,
+                    "otherUserProfilePic" to currentUserProfilePic,
+                    "lastMessage" to "",
+                    "lastMessageTime" to System.currentTimeMillis(),
+                    "unreadCount" to 0
+                ))
+                
+                batch.commit().await()
+            }
+            
+            Result.success(chatId)
         } catch (e: Exception) {
             Result.failure(e)
         }

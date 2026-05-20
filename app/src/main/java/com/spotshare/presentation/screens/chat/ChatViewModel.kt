@@ -20,6 +20,9 @@ class ChatViewModel @Inject constructor(
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+    
+    private val _currentChat = MutableStateFlow<Chat?>(null)
+    val currentChat = _currentChat.asStateFlow()
 
     init {
         loadChats()
@@ -35,6 +38,11 @@ class ChatViewModel @Inject constructor(
         chatRepository.getMessages(chatId)
             .onEach { _messages.value = it }
             .launchIn(viewModelScope)
+            
+        // Find chat in existing list to get metadata (name, pic)
+        _chats.onEach { list ->
+            list.find { it.id == chatId }?.let { _currentChat.value = it }
+        }.launchIn(viewModelScope)
     }
 
     fun sendMessage(chatId: String, text: String) {

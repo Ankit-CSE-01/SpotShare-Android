@@ -25,6 +25,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
+    val currentChat by viewModel.currentChat.collectAsState()
     
     LaunchedEffect(chatId) {
         viewModel.loadMessages(chatId)
@@ -32,6 +33,7 @@ fun ChatScreen(
 
     ChatContent(
         chatId = chatId,
+        chatName = currentChat?.otherUserName ?: "Chat",
         messages = messages,
         onBackClick = onBackClick,
         onSendMessage = { text -> viewModel.sendMessage(chatId, text) }
@@ -42,6 +44,7 @@ fun ChatScreen(
 @Composable
 fun ChatContent(
     chatId: String,
+    chatName: String,
     messages: List<Message>,
     onBackClick: () -> Unit,
     onSendMessage: (String) -> Unit
@@ -51,7 +54,7 @@ fun ChatContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chat") },
+                title = { Text(chatName) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -60,12 +63,25 @@ fun ChatContent(
             )
         }
     ) { padding ->
+        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+        
+        // Auto-scroll to bottom on new message
+        LaunchedEffect(messages.size) {
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+
         Column(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            LazyColumn(modifier = Modifier.weight(1f)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                state = listState
+            ) {
                 items(messages) { message ->
-                    MessageBubble(message = message, isCurrentUser = true)
+                    val isCurrentUser = message.senderId == com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                    MessageBubble(message = message, isCurrentUser = isCurrentUser)
                 }
             }
             
@@ -119,6 +135,7 @@ fun ChatScreenPreview() {
     SpotShareTheme {
         ChatContent(
             chatId = "1",
+            chatName = "john_doe",
             messages = listOf(
                 Message(
                     id = "1",

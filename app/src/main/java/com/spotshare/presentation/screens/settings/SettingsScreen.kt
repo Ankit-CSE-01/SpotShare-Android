@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -15,6 +17,7 @@ import com.spotshare.presentation.theme.SpotShareTheme
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
+    onLogoutSuccess: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val darkTheme by viewModel.darkTheme.collectAsState(initial = false)
@@ -29,7 +32,11 @@ fun SettingsScreen(
         onDarkThemeChange = { viewModel.setDarkTheme(it) },
         onNotificationsChange = { viewModel.setNotificationsEnabled(it) },
         onSearchRadiusChange = { viewModel.setSearchRadius(it) },
-        onScheduleReminder = { h, m -> viewModel.scheduleDailyReminder(h, m) }
+        onScheduleReminder = { h, m -> viewModel.scheduleDailyReminder(h, m) },
+        onLogout = {
+            viewModel.logout()
+            onLogoutSuccess()
+        }
     )
 }
 
@@ -43,7 +50,8 @@ fun SettingsContent(
     onDarkThemeChange: (Boolean) -> Unit,
     onNotificationsChange: (Boolean) -> Unit,
     onSearchRadiusChange: (Int) -> Unit,
-    onScheduleReminder: (Int, Int) -> Unit
+    onScheduleReminder: (Int, Int) -> Unit,
+    onLogout: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -104,6 +112,21 @@ fun SettingsContent(
                 trailingContent = { Text("Pick", color = MaterialTheme.colorScheme.primary) },
                 modifier = Modifier.clickable { showDatePicker = true }
             )
+
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = onLogout,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Logout, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Logout")
+            }
         }
         
         if (showTimePicker) {
@@ -146,7 +169,8 @@ fun SettingsScreenPreview() {
             onDarkThemeChange = {},
             onNotificationsChange = {},
             onSearchRadiusChange = {},
-            onScheduleReminder = { _, _ -> }
+            onScheduleReminder = { _, _ -> },
+            onLogout = {}
         )
     }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.spotshare.domain.model.Spot
 import com.spotshare.domain.model.User
+import com.spotshare.domain.repository.ChatRepository
 import com.spotshare.domain.repository.SpotRepository
 import com.spotshare.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,10 +19,14 @@ class ProfileViewModel @Inject constructor(
     private val auth: FirebaseAuth,
     private val repository: SpotRepository,
     private val userRepository: UserRepository,
+    private val chatRepository: ChatRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val userId: String? = savedStateHandle["userId"]
+    
+    private val _navigateToChat = MutableStateFlow<String?>(null)
+    val navigateToChat = _navigateToChat.asStateFlow()
 
     private val _user = MutableStateFlow<User?>(null)
     val user = _user.asStateFlow()
@@ -68,6 +73,19 @@ class ProfileViewModel @Inject constructor(
 
     fun logout() {
         auth.signOut()
+    }
+
+    fun startChat() {
+        val targetUserId = userId ?: return
+        viewModelScope.launch {
+            chatRepository.getOrCreateChat(targetUserId).onSuccess { chatId ->
+                _navigateToChat.value = chatId
+            }
+        }
+    }
+
+    fun onChatNavigated() {
+        _navigateToChat.value = null
     }
 
     fun toggleFollow() {

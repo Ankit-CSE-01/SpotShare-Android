@@ -1,5 +1,6 @@
 package com.spotshare.presentation.screens.reels
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -13,33 +14,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.spotshare.domain.model.Reel
 import com.spotshare.presentation.theme.SpotShareTheme
 
-/**
- * Full-screen Reels experience using Media3 ExoPlayer.
- * Supports vertical scrolling and interactive action overlays.
- */
 @Composable
 fun ReelsScreen(
     onBackClick: () -> Unit,
     onCameraClick: () -> Unit,
     onProfileClick: (String) -> Unit,
-    onLocationClick: (com.spotshare.domain.model.Location) -> Unit,
+    onLocationClick: (String) -> Unit,
+    onMessageClick: (String) -> Unit,
     viewModel: ReelsViewModel = hiltViewModel()
 ) {
     val reels by viewModel.reels.collectAsState()
+
     ReelsContent(
         reels = reels,
         onBackClick = onBackClick,
         onCameraClick = onCameraClick,
-        onLikeClick = { viewModel.likeReel(it) },
         onProfileClick = onProfileClick,
-        onLocationClick = onLocationClick
+        onLikeClick = { viewModel.likeReel(it) },
+        onLocationClick = onLocationClick,
+        onMessageClick = onMessageClick
     )
 }
 
@@ -51,67 +50,68 @@ fun ReelsContent(
     onCameraClick: () -> Unit,
     onLikeClick: (String) -> Unit,
     onProfileClick: (String) -> Unit,
-    onLocationClick: (com.spotshare.domain.model.Location) -> Unit
+    onLocationClick: (String) -> Unit,
+    onMessageClick: (String) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { reels.size })
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        VerticalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize()
-        ) { page ->
-            val reel = reels[page]
-            ReelPlayer(
-                reel = reel,
-                isActive = page == pagerState.currentPage,
-                onLike = { onLikeClick(reel.id) },
-                onComment = { /* Show comments */ },
-                onShare = { /* Share */ },
-                onProfileClick = onProfileClick,
-                onLocationClick = onLocationClick,
-                onMoreClick = { /* More options */ }
-            )
-        }
+    Scaffold { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Color.Black)
+        ) {
+            if (reels.isEmpty()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.White
+                )
+            } else {
+                VerticalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { page ->
+                    val reel = reels[page]
+                    ReelPlayer(
+                        reel = reel,
+                        isActive = pagerState.currentPage == page,
+                        onLike = { onLikeClick(reel.id) },
+                        onComment = { /* Handle comment */ },
+                        onShare = { /* Handle share */ },
+                        onProfileClick = { onProfileClick(reel.userId) },
+                        onLocationClick = { /* Handle location */ },
+                        onMoreClick = { /* Handle more */ }
+                    )
+                }
+            }
 
-        // Transparent Top Bar
-        TopAppBar(
-            title = {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Reels",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            },
-            navigationIcon = {
+            // Top Controls
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .align(Alignment.TopCenter),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                 }
-            },
-            actions = {
+                Text(
+                    "Reels",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
                 IconButton(onClick = onCameraClick) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera",
-                        tint = Color.White
-                    )
+                    Icon(Icons.Default.CameraAlt, "Camera", tint = Color.White)
                 }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent,
-                scrolledContainerColor = Color.Transparent
-            ),
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
+            }
+        }
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun ReelsScreenPreview() {
     SpotShareTheme {
@@ -120,18 +120,18 @@ fun ReelsScreenPreview() {
                 Reel(
                     id = "1",
                     userId = "u1",
-                    userName = "john_doe",
+                    userName = "jane_smith",
                     userProfilePic = null,
                     videoUrl = "",
                     thumbnailUrl = "",
-                    caption = "Cool sunset!",
+                    caption = "Beautiful sunset!",
                     location = null,
-                    locationName = "Beach",
-                    audioName = "Relaxing Music",
-                    likes = 120,
-                    commentCount = 10,
-                    shareCount = 5,
-                    viewCount = 1000,
+                    locationName = "Malibu, CA",
+                    audioName = "Original Audio",
+                    likes = 1200,
+                    commentCount = 45,
+                    shareCount = 12,
+                    viewCount = 5000,
                     timestamp = 0,
                     isLiked = false,
                     isSaved = false,
@@ -142,7 +142,8 @@ fun ReelsScreenPreview() {
             onCameraClick = {},
             onLikeClick = {},
             onProfileClick = {},
-            onLocationClick = {}
+            onLocationClick = {},
+            onMessageClick = {}
         )
     }
 }

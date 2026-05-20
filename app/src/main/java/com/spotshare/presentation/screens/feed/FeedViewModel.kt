@@ -22,7 +22,8 @@ class FeedViewModel @Inject constructor(
     private val getFeedUseCase: GetFeedUseCase,
     private val feedRepository: FeedRepository,
     private val postRepository: PostRepository,
-    private val pexelsApi: PexelsApiService
+    private val pexelsApi: PexelsApiService,
+    private val auth: com.google.firebase.auth.FirebaseAuth
 ) : ViewModel() {
 
     private val _postsList = MutableStateFlow<List<Post>>(emptyList())
@@ -104,5 +105,9 @@ class FeedViewModel @Inject constructor(
         _postsList.update { list ->
             list.map { if (it.id == postId) it.copy(isSaved = !it.isSaved) else it }
         }
+    }
+
+    fun logout() {
+        auth.signOut()
     }
 }

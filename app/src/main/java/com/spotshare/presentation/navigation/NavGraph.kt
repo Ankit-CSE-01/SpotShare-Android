@@ -78,7 +78,12 @@ fun NavGraph(
                 onStoryClick = { userId -> navController.navigate(Screen.StoryView.createRoute(userId)) },
                 onPostClick = { spotId -> navController.navigate(Screen.SpotDetail.createRoute(spotId)) },
                 onProfileClick = { userId -> navController.navigate(Screen.Profile.createRoute(userId)) },
-                onSettingsClick = { navController.navigate(Screen.Settings.route) }
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onLogout = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
         composable(route = Screen.CreateStory.route) {
@@ -99,7 +104,11 @@ fun NavGraph(
                 onProfileClick = { userId ->
                     navController.navigate(Screen.Profile.createRoute(userId))
                 },
-                onLocationClick = { /* Handle location click */ }
+                onLocationClick = { /* Handle location click */ },
+                onMessageClick = { userId ->
+                    // Directly start a chat from a Reel
+                    navController.navigate(Screen.Profile.createRoute(userId))
+                }
             )
         }
         composable(route = Screen.CreateReel.route) {
@@ -185,6 +194,9 @@ fun NavGraph(
                 },
                 onSpotClick = { spotId ->
                     navController.navigate(Screen.SpotDetail.createRoute(spotId))
+                },
+                onNavigateToChat = { chatId: String ->
+                    navController.navigate(Screen.Chat.createRoute(chatId))
                 }
             )
         }
@@ -274,7 +286,12 @@ fun NavGraph(
         }
         composable(route = Screen.Settings.route) {
             SettingsScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onLogoutSuccess = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
             )
         }
     }

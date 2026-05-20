@@ -12,7 +12,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmScheduler: AlarmScheduler,
+    private val auth: com.google.firebase.auth.FirebaseAuth
 ) : ViewModel() {
 
     val darkTheme: Flow<Boolean> = preferencesManager.darkTheme
@@ -39,5 +40,9 @@ class SettingsViewModel @Inject constructor(
 
     fun scheduleDailyReminder(hour: Int, minute: Int) {
         alarmScheduler.scheduleDailyReminder(hour, minute)
+    }
+
+    fun logout() {
+        auth.signOut()
     }
 }

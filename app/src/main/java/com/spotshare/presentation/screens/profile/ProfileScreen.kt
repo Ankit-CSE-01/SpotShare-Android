@@ -52,12 +52,21 @@ fun ProfileScreen(
     onFollowersClick: (String) -> Unit,
     onFollowingClick: (String) -> Unit,
     onSpotClick: (String) -> Unit,
+    onNavigateToChat: (String) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
     val createdSpots by viewModel.createdSpots.collectAsState()
+    val navigateToChat by viewModel.navigateToChat.collectAsState()
     val isOwnProfile = viewModel.isOwnProfile
     
+    LaunchedEffect(navigateToChat) {
+        navigateToChat?.let { chatId ->
+            onNavigateToChat(chatId)
+            viewModel.onChatNavigated()
+        }
+    }
+
     ProfileContent(
         user = user,
         createdSpots = createdSpots,
@@ -71,7 +80,8 @@ fun ProfileScreen(
         onShareProfileClick = { onShareProfileClick(user?.uid ?: "") },
         onFollowersClick = { onFollowersClick(user?.uid ?: "") },
         onFollowingClick = { onFollowingClick(user?.uid ?: "") },
-        onSpotClick = onSpotClick
+        onSpotClick = onSpotClick,
+        onMessageClick = { viewModel.startChat() }
     )
 }
 
@@ -87,7 +97,8 @@ fun ProfileContent(
     onShareProfileClick: () -> Unit,
     onFollowersClick: () -> Unit,
     onFollowingClick: () -> Unit,
-    onSpotClick: (String) -> Unit
+    onSpotClick: (String) -> Unit,
+    onMessageClick: () -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val coroutineScope = rememberCoroutineScope()
@@ -226,7 +237,7 @@ fun ProfileContent(
                         Text("Follow", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     }
                     Button(
-                        onClick = { /* Message */ },
+                        onClick = onMessageClick,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -423,7 +434,8 @@ fun ProfileScreenPreview() {
             onShareProfileClick = {},
             onFollowersClick = {},
             onFollowingClick = {},
-            onSpotClick = {}
+            onSpotClick = {},
+            onMessageClick = {}
         )
     }
 }

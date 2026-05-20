@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -40,6 +41,7 @@ fun FeedScreen(
     onPostClick: (String) -> Unit,
     onProfileClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
+    onLogout: () -> Unit,
     viewModel: FeedViewModel = hiltViewModel()
 ) {
     val posts by viewModel.postsList.collectAsState()
@@ -59,6 +61,10 @@ fun FeedScreen(
         onPostClick = onPostClick,
         onProfileClick = onProfileClick,
         onSettingsClick = onSettingsClick,
+        onLogout = {
+            viewModel.logout()
+            onLogout()
+        },
         onLikeClick = { viewModel.likePost(it) },
         onSaveClick = { viewModel.savePost(it) },
         onFilterCategory = { viewModel.filterByCategory(it) },
@@ -80,6 +86,7 @@ fun FeedContent(
     onPostClick: (String) -> Unit,
     onProfileClick: (String) -> Unit,
     onSettingsClick: () -> Unit,
+    onLogout: () -> Unit,
     onLikeClick: (String) -> Unit,
     onSaveClick: (String) -> Unit,
     onFilterCategory: (String) -> Unit,
@@ -121,6 +128,17 @@ fun FeedContent(
                         } 
                     },
                     icon = { Icon(Icons.Default.Settings, null) }
+                )
+                NavigationDrawerItem(
+                    label = { Text("Logout") },
+                    selected = false,
+                    onClick = { 
+                        scope.launch { 
+                            drawerState.close()
+                            onLogout()
+                        } 
+                    },
+                    icon = { Icon(Icons.AutoMirrored.Filled.Logout, null) }
                 )
             }
         }
@@ -289,6 +307,7 @@ fun FeedScreenPreview() {
             onPostClick = {},
             onProfileClick = {},
             onSettingsClick = {},
+            onLogout = {},
             onLikeClick = {},
             onSaveClick = {},
             onFilterCategory = {},
