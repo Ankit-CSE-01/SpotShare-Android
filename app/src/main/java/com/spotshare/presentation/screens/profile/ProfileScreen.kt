@@ -4,9 +4,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -16,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -32,16 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.spotshare.domain.model.Spot
 import com.spotshare.domain.model.User
 import com.spotshare.presentation.theme.SpotShareTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-/**
- * Comprehensive Profile Screen.
- * Features stats, bio, highlights, and 4-tab content pager.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -51,12 +42,10 @@ fun ProfileScreen(
     onShareProfileClick: (String) -> Unit,
     onFollowersClick: (String) -> Unit,
     onFollowingClick: (String) -> Unit,
-    onSpotClick: (String) -> Unit,
     onNavigateToChat: (String) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
-    val createdSpots by viewModel.createdSpots.collectAsState()
     val navigateToChat by viewModel.navigateToChat.collectAsState()
     val isOwnProfile = viewModel.isOwnProfile
     
@@ -69,7 +58,6 @@ fun ProfileScreen(
 
     ProfileContent(
         user = user,
-        createdSpots = createdSpots,
         isOwnProfile = isOwnProfile,
         onLogout = {
             viewModel.logout()
@@ -80,7 +68,6 @@ fun ProfileScreen(
         onShareProfileClick = { onShareProfileClick(user?.uid ?: "") },
         onFollowersClick = { onFollowersClick(user?.uid ?: "") },
         onFollowingClick = { onFollowingClick(user?.uid ?: "") },
-        onSpotClick = onSpotClick,
         onMessageClick = { viewModel.startChat() }
     )
 }
@@ -89,7 +76,6 @@ fun ProfileScreen(
 @Composable
 fun ProfileContent(
     user: User?,
-    createdSpots: List<Spot>,
     isOwnProfile: Boolean,
     onLogout: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -97,10 +83,9 @@ fun ProfileContent(
     onShareProfileClick: () -> Unit,
     onFollowersClick: () -> Unit,
     onFollowingClick: () -> Unit,
-    onSpotClick: (String) -> Unit,
     onMessageClick: () -> Unit
 ) {
-    val pagerState = rememberPagerState(pageCount = { 4 })
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
@@ -128,7 +113,7 @@ fun ProfileContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(bottom = 16.dp) // Added bottom padding for better scroll end
+                .padding(bottom = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             // Header: Image + Stats
@@ -286,7 +271,7 @@ fun ProfileContent(
                     }
                 }
             ) {
-                val icons = listOf(Icons.Default.GridOn, Icons.Default.PlayArrow, Icons.Default.PersonPin, Icons.Default.Place)
+                val icons = listOf(Icons.Default.GridOn, Icons.Default.PlayArrow, Icons.Default.PersonPin)
                 icons.forEachIndexed { index, icon ->
                     Tab(
                         selected = pagerState.currentPage == index,
@@ -297,16 +282,15 @@ fun ProfileContent(
             }
 
             // Pager Content
-            Box(modifier = Modifier.height(600.dp)) {
+            Box(modifier = Modifier.height(400.dp)) {
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize()
                 ) { page ->
                     when (page) {
-                        0 -> PostGrid(spots = createdSpots, onSpotClick = onSpotClick)
+                        0 -> PlaceholderTab("Posts")
                         1 -> PlaceholderTab("Reels")
                         2 -> PlaceholderTab("Tagged")
-                        3 -> PlaceholderTab("Map")
                     }
                 }
             }
@@ -344,41 +328,6 @@ fun HighlightItem(title: String, imageUrl: String?, isNew: Boolean = false) {
         }
         Spacer(Modifier.height(4.dp))
         Text(text = title, fontSize = 12.sp)
-    }
-}
-
-@Composable
-fun PostGrid(spots: List<Spot>, onSpotClick: (String) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(1.dp),
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
-        verticalArrangement = Arrangement.spacedBy(1.dp)
-    ) {
-        items(spots) { spot ->
-            Box(modifier = Modifier.aspectRatio(1f)) {
-                AsyncImage(
-                    model = spot.imageUrls.firstOrNull(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable { onSpotClick(spot.id) },
-                    contentScale = ContentScale.Crop
-                )
-                // Simulated Like/Video count overlay
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Favorite, null, modifier = Modifier.size(12.dp), tint = Color.White)
-                    Spacer(Modifier.width(2.dp))
-                    Text("234", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
     }
 }
 
@@ -426,7 +375,6 @@ fun ProfileScreenPreview() {
                 savedPosts = emptyList(),
                 fcmToken = null
             ),
-            createdSpots = emptyList(),
             isOwnProfile = true,
             onLogout = {},
             onSettingsClick = {},
@@ -434,7 +382,6 @@ fun ProfileScreenPreview() {
             onShareProfileClick = {},
             onFollowersClick = {},
             onFollowingClick = {},
-            onSpotClick = {},
             onMessageClick = {}
         )
     }

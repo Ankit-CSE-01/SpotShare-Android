@@ -13,7 +13,6 @@ import com.spotshare.presentation.screens.splash.SplashScreen
 import com.spotshare.presentation.screens.feed.FeedScreen
 import com.spotshare.presentation.screens.explore.ExploreScreen
 import com.spotshare.presentation.screens.reels.ReelsScreen
-import com.spotshare.presentation.screens.map.MapScreen
 import com.spotshare.presentation.screens.profile.ProfileScreen
 import com.spotshare.presentation.screens.settings.SettingsScreen
 import com.spotshare.presentation.screens.chat.ChatListScreen
@@ -74,7 +73,7 @@ fun NavGraph(
                 onMessagesClick = { navController.navigate(Screen.ChatList.route) },
                 onAddStoryClick = { navController.navigate(Screen.CreateStory.route) },
                 onStoryClick = { userId -> navController.navigate(Screen.StoryView.createRoute(userId)) },
-                onPostClick = { _ -> /* Post detail not implemented in social-first architecture yet */ },
+                onPostClick = { _ -> },
                 onProfileClick = { userId -> navController.navigate(Screen.Profile.createRoute(userId)) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
@@ -92,7 +91,7 @@ fun NavGraph(
         }
         composable(route = Screen.Explore.route) {
             ExploreScreen(
-                onPostClick = { _ -> /* Handle explore post click */ }
+                onPostClick = { _ -> }
             )
         }
         composable(route = Screen.Reels.route) {
@@ -102,7 +101,7 @@ fun NavGraph(
                 onProfileClick = { userId ->
                     navController.navigate(Screen.Profile.createRoute(userId))
                 },
-                onLocationClick = { _ -> /* Handle location click */ },
+                onLocationClick = { _ -> },
                 onMessageClick = { userId ->
                     navController.navigate(Screen.Profile.createRoute(userId))
                 }
@@ -141,11 +140,6 @@ fun NavGraph(
                 }
             )
         }
-        composable(route = Screen.Map.route) {
-            MapScreen(
-                onSpotClick = { _ -> /* Handle map spot click */ }
-            )
-        }
         composable(
             route = Screen.Profile.route,
             arguments = listOf(navArgument("userId") { 
@@ -173,7 +167,6 @@ fun NavGraph(
                 onFollowingClick = { userId ->
                     navController.navigate(Screen.SocialList.createRoute(userId, 1))
                 },
-                onSpotClick = { _ -> },
                 onNavigateToChat = { chatId: String ->
                     navController.navigate(Screen.Chat.createRoute(chatId))
                 }

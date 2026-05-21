@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
 
                 val showBottomBar = when (currentRoute) {
                     Screen.Feed.route, Screen.Explore.route, Screen.Reels.route, 
-                    Screen.CreatePost.route, Screen.Profile.route, Screen.Map.route -> true
+                    Screen.CreatePost.route, Screen.Profile.route -> true
                     else -> false
                 }
 

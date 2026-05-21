@@ -14,12 +14,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindSpotRepository(
-        spotRepositoryImpl: SpotRepositoryImpl
-    ): SpotRepository
-
-    @Binds
-    @Singleton
     abstract fun bindFeedRepository(
         feedRepositoryImpl: FeedRepositoryImpl
     ): FeedRepository
