@@ -128,9 +128,6 @@ dependencies {
     // WorkManager
     implementation(libs.work.runtime.ktx)
 
-    // Lottie
-    implementation(libs.lottie.compose)
-
     // Gson
     implementation(libs.gson)
 
