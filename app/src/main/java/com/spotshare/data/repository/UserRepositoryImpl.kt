@@ -125,4 +125,16 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun isUsernameUnique(username: String): Boolean {
+        return try {
+            val query = firestore.collection(Constants.USERS_COLLECTION)
+                .whereEqualTo("userName", username)
+                .get()
+                .await()
+            query.isEmpty
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

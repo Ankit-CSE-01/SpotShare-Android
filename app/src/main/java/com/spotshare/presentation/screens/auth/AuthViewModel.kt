@@ -9,6 +9,7 @@ import com.spotshare.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -95,9 +96,55 @@ class AuthViewModel @Inject constructor(
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
                 val result = auth.signInWithCredential(credential).await()
-                _authState.value = AuthState.Success(result.user?.email ?: "User")
+                val user = result.user
+                
+                if (user != null) {
+                    // Check if profile exists
+                    val userDoc = userRepository.getUser(user.uid).first()
+                    if (userDoc == null) {
+                        _authState.value = AuthState.RequiresOnboarding(user.email ?: "")
+                    } else {
+                        _authState.value = AuthState.Success(user.email ?: "User")
+                    }
+                }
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Google sign-in failed")
+            }
+        }
+    }
+
+    fun completeOnboarding(fullName: String, username: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val currentUser = auth.currentUser ?: throw Exception("No authenticated user")
+                
+                if (!userRepository.isUsernameUnique(username)) {
+                    _authState.value = AuthState.Error("Username is already taken")
+                    return@launch
+                }
+
+                val userProfile = User(
+                    uid = currentUser.uid,
+                    userName = username,
+                    displayName = fullName,
+                    email = currentUser.email ?: "",
+                    bio = "I'm new to SpotShare!",
+                    profilePicUrl = currentUser.photoUrl?.toString(),
+                    website = null,
+                    postsCount = 0,
+                    followersCount = 0,
+                    followingCount = 0,
+                    isFollowing = false,
+                    isPrivate = false,
+                    savedPosts = emptyList(),
+                    fcmToken = null
+                )
+                
+                userRepository.updateProfile(userProfile).getOrThrow()
+                _authState.value = AuthState.Success(currentUser.email ?: "")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Onboarding failed")
             }
         }
     }
@@ -107,6 +154,7 @@ sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     data class Success(val email: String) : AuthState()
+    data class RequiresOnboarding(val email: String) : AuthState()
     object PasswordResetSent : AuthState()
     data class Error(val message: String) : AuthState()
 }

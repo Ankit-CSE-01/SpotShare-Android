@@ -2,13 +2,17 @@ package com.spotshare.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.spotshare.presentation.screens.auth.AuthViewModel
+import com.spotshare.presentation.screens.auth.AuthState
 import com.spotshare.presentation.screens.auth.LoginScreen
 import com.spotshare.presentation.screens.auth.SignUpScreen
+import com.spotshare.presentation.screens.auth.OnboardingScreen
 import com.spotshare.presentation.screens.splash.SplashScreen
 import com.spotshare.presentation.screens.feed.FeedScreen
 import com.spotshare.presentation.screens.explore.ExploreScreen
@@ -46,14 +50,29 @@ fun NavGraph(
             )
         }
         composable(route = Screen.Auth.route) {
+            val authViewModel: AuthViewModel = hiltViewModel()
             LoginScreen(
-                onLoginSuccess = { _ ->
-                    navController.navigate(Screen.Feed.route) {
-                        popUpTo(Screen.Auth.route) { inclusive = true }
+                onLoginSuccess = { state ->
+                    if (state is AuthState.RequiresOnboarding) {
+                        navController.navigate(Screen.Onboarding.route)
+                    } else {
+                        navController.navigate(Screen.Feed.route) {
+                            popUpTo(Screen.Auth.route) { inclusive = true }
+                        }
                     }
                 },
                 onNavigateToSignUp = {
                     navController.navigate(Screen.SignUp.route)
+                },
+                viewModel = authViewModel
+            )
+        }
+        composable(route = Screen.Onboarding.route) {
+            OnboardingScreen(
+                onOnboardingComplete = {
+                    navController.navigate(Screen.Feed.route) {
+                        popUpTo(Screen.Auth.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -140,13 +159,27 @@ fun NavGraph(
                 }
             )
         }
+        
+        // Define both routes to handle the optional userId safely
+        composable(route = "profile") {
+            ProfileScreen(
+                onLogout = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onEditProfileClick = { navController.navigate(Screen.EditProfile.route) },
+                onShareProfileClick = { _ -> },
+                onFollowersClick = { userId -> navController.navigate(Screen.SocialList.createRoute(userId, 0)) },
+                onFollowingClick = { userId -> navController.navigate(Screen.SocialList.createRoute(userId, 1)) },
+                onNavigateToChat = { chatId -> navController.navigate(Screen.Chat.createRoute(chatId)) }
+            )
+        }
+
         composable(
-            route = Screen.Profile.route,
-            arguments = listOf(navArgument("userId") { 
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            })
+            route = Screen.Profile.ROUTE_WITH_ARGS,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
         ) {
             ProfileScreen(
                 onLogout = {
@@ -154,38 +187,19 @@ fun NavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onSettingsClick = {
-                    navController.navigate(Screen.Settings.route)
-                },
-                onEditProfileClick = {
-                    navController.navigate(Screen.EditProfile.route)
-                },
+                onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onEditProfileClick = { navController.navigate(Screen.EditProfile.route) },
                 onShareProfileClick = { _ -> },
-                onFollowersClick = { userId ->
-                    navController.navigate(Screen.SocialList.createRoute(userId, 0))
-                },
-                onFollowingClick = { userId ->
-                    navController.navigate(Screen.SocialList.createRoute(userId, 1))
-                },
-                onNavigateToChat = { chatId: String ->
-                    navController.navigate(Screen.Chat.createRoute(chatId))
-                }
+                onFollowersClick = { userId -> navController.navigate(Screen.SocialList.createRoute(userId, 0)) },
+                onFollowingClick = { userId -> navController.navigate(Screen.SocialList.createRoute(userId, 1)) },
+                onNavigateToChat = { chatId -> navController.navigate(Screen.Chat.createRoute(chatId)) }
             )
         }
+
         composable(route = Screen.EditProfile.route) {
             EditProfileScreen(
                 onBackClick = { navController.popBackStack() },
                 onSaveSuccess = { navController.popBackStack() }
-            )
-        }
-        composable(
-            route = Screen.StoryView.route,
-            arguments = listOf(navArgument("userId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            StoryViewScreen(
-                userId = userId,
-                onClose = { navController.popBackStack() }
             )
         }
         composable(route = Screen.ChatList.route) {

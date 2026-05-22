@@ -45,13 +45,13 @@ data class PexelsResponse(
 )
 
 data class PexelsPhoto(
-    val id: Int,
+    val id: Long,
     val width: Int,
     val height: Int,
     val url: String,
     val photographer: String,
     @SerializedName("photographer_url") val photographerUrl: String,
-    @SerializedName("photographer_id") val photographerId: Int,
+    @SerializedName("photographer_id") val photographerId: Long,
     @SerializedName("avg_color") val avgColor: String,
     val src: PexelsSrc,
     val liked: Boolean,
@@ -79,7 +79,7 @@ data class PexelsVideoResponse(
 )
 
 data class PexelsVideo(
-    val id: Int,
+    val id: Long,
     val width: Int,
     val height: Int,
     val url: String,
@@ -90,7 +90,7 @@ data class PexelsVideo(
 )
 
 data class PexelsUser(
-    val id: Int,
+    val id: Long,
     val name: String,
     val url: String
 )

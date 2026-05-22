@@ -35,6 +35,9 @@ class FeedViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
 
@@ -46,6 +49,7 @@ class FeedViewModel @Inject constructor(
     fun loadFeedFromPexels(query: String = "travel destinations") {
         viewModelScope.launch {
             _isRefreshing.value = true
+            _error.value = null
             try {
                 val response = pexelsApi.searchPhotos(
                     apiKey = BuildConfig.PEXELS_API_KEY,
@@ -72,8 +76,12 @@ class FeedViewModel @Inject constructor(
                     )
                 }
                 _postsList.value = posts
+                if (posts.isEmpty()) {
+                    _error.value = "No photos found for '$query'"
+                }
             } catch (e: Exception) {
                 Log.e("FeedViewModel", "Error fetching Pexels photos", e)
+                _error.value = "Failed to load feed: ${e.localizedMessage ?: "Unknown error"}"
             } finally {
                 _isRefreshing.value = false
             }

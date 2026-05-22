@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,10 +29,6 @@ import com.spotshare.presentation.theme.SpotShareTheme
 import com.spotshare.util.IntentHelper
 import kotlinx.coroutines.launch
 
-/**
- * Main Feed Screen representing the Home tab.
- * Displays Instagram-style posts and stories using Pexels API.
- */
 @Composable
 fun FeedScreen(
     onNotificationsClick: () -> Unit,
@@ -48,12 +45,14 @@ fun FeedScreen(
     val stories by viewModel.stories.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val error by viewModel.error.collectAsState()
     
     FeedContent(
         posts = posts,
         stories = stories,
         isRefreshing = isRefreshing,
         isLoadingMore = isLoadingMore,
+        error = error,
         onNotificationsClick = onNotificationsClick,
         onMessagesClick = onMessagesClick,
         onAddStoryClick = onAddStoryClick,
@@ -79,6 +78,7 @@ fun FeedContent(
     stories: List<StoryGroup>,
     isRefreshing: Boolean,
     isLoadingMore: Boolean,
+    error: String?,
     onNotificationsClick: () -> Unit,
     onMessagesClick: () -> Unit,
     onAddStoryClick: () -> Unit,
@@ -194,6 +194,14 @@ fun FeedContent(
                     CategoryFilterChips(onCategorySelected = onFilterCategory)
                 }
                 
+                if (isRefreshing) {
+                    item {
+                        Box(modifier = Modifier.fillParentMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
                 items(posts, key = { it.id }) { post ->
                     PostCard(
                         post = post,
@@ -207,7 +215,7 @@ fun FeedContent(
                     )
                 }
                 
-                if (posts.isEmpty() && !isLoadingMore) {
+                if (posts.isEmpty() && !isRefreshing && !isLoadingMore) {
                     item {
                         Box(
                             modifier = Modifier
@@ -217,9 +225,10 @@ fun FeedContent(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "No content available.",
+                                    text = error ?: "No content available.",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.Gray
+                                    color = Color.Gray,
+                                    textAlign = TextAlign.Center
                                 )
                                 Spacer(Modifier.height(16.dp))
                                 Button(onClick = onRefresh) {
@@ -227,10 +236,10 @@ fun FeedContent(
                                 }
                                 Spacer(Modifier.height(8.dp))
                                 Text(
-                                    text = "Note: Ensure Firestore is enabled in Firebase Console and your internet connection is active.",
+                                    text = "Ensure Firestore is enabled and check internet connection.",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color.LightGray,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         }
@@ -300,6 +309,7 @@ fun FeedScreenPreview() {
             stories = emptyList(),
             isRefreshing = false,
             isLoadingMore = false,
+            error = null,
             onNotificationsClick = {},
             onMessagesClick = {},
             onAddStoryClick = {},

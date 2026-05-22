@@ -18,7 +18,7 @@ fun BottomNavBar(navController: NavController) {
         NavigationItem("Explore", Screen.Explore.route, Icons.Filled.Search, Icons.Outlined.Search),
         NavigationItem("Add", Screen.CreatePost.route, Icons.Filled.AddBox, Icons.Outlined.AddBox),
         NavigationItem("Reels", Screen.Reels.route, Icons.Filled.Movie, Icons.Outlined.Movie),
-        NavigationItem("Profile", Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person)
+        NavigationItem("Profile", "profile", Icons.Filled.Person, Icons.Outlined.Person)
     )
 
     NavigationBar {

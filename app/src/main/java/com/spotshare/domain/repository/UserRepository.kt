@@ -10,4 +10,5 @@ interface UserRepository {
     fun getFollowers(userId: String): Flow<List<User>>
     fun getFollowing(userId: String): Flow<List<User>>
     suspend fun updateProfile(user: User): Result<Unit>
+    suspend fun isUsernameUnique(username: String): Boolean
 }

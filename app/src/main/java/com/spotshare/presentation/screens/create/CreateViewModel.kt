@@ -28,6 +28,9 @@ class CreateViewModel @Inject constructor(
     private val _isUploading = MutableStateFlow(false)
     val isUploading = _isUploading.asStateFlow()
 
+    private val _selectedLocation = MutableStateFlow<String?>(null)
+    val selectedLocation = _selectedLocation.asStateFlow()
+
     init {
         // Observe selected media from MediaPicker via SavedStateHandle
         savedStateHandle.getStateFlow<List<String>?>("selected_media", null)
@@ -51,7 +54,11 @@ class CreateViewModel @Inject constructor(
         _selectedMedia.value = _selectedMedia.value.filter { it.uri != uri }
     }
 
-    fun uploadPost(caption: String, locationName: String?, lat: Double?, lng: Double?, rating: Float?) {
+    fun setLocation(name: String) {
+        _selectedLocation.value = name
+    }
+
+    fun uploadPost(caption: String, rating: Float?) {
         viewModelScope.launch {
             _isUploading.value = true
             
@@ -64,10 +71,10 @@ class CreateViewModel @Inject constructor(
                 userId = userId,
                 userName = userName,
                 userProfilePic = auth.currentUser?.photoUrl?.toString(),
-                media = emptyList(), // Will be populated after upload
+                media = emptyList(), 
                 caption = caption,
-                location = if (lat != null && lng != null) Location(lat, lng, locationName) else null,
-                locationName = locationName,
+                location = null,
+                locationName = _selectedLocation.value,
                 likes = 0,
                 commentCount = 0,
                 timestamp = System.currentTimeMillis(),

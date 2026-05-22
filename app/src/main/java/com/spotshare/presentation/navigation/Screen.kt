@@ -4,13 +4,18 @@ sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Auth : Screen("auth")
     object SignUp : Screen("sign_up")
+    object Onboarding : Screen("onboarding")
     object Feed : Screen("feed")
     object Explore : Screen("explore")
     object Reels : Screen("reels")
     object CreateReel : Screen("create_reel")
-    object Profile : Screen("profile?userId={userId}") {
+    
+    // Using a separate route for profile with optional parameter to avoid literal string bug
+    object Profile : Screen("profile_base") {
+        const val ROUTE_WITH_ARGS = "profile?userId={userId}"
         fun createRoute(userId: String? = null) = if (userId != null) "profile?userId=$userId" else "profile"
     }
+
     object EditProfile : Screen("edit_profile")
     object StoryView : Screen("story_view/{userId}") {
         fun createRoute(userId: String) = "story_view/$userId"
