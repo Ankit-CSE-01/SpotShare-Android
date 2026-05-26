@@ -23,7 +23,8 @@ class FeedViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val postRepository: PostRepository,
     private val pexelsApi: PexelsApiService,
-    private val auth: com.google.firebase.auth.FirebaseAuth
+    private val auth: com.google.firebase.auth.FirebaseAuth,
+    private val db: com.spotshare.data.local.database.AppDatabase
 ) : ViewModel() {
 
     private val _postsList = MutableStateFlow<List<Post>>(emptyList())
@@ -116,6 +117,10 @@ class FeedViewModel @Inject constructor(
     }
 
     fun logout() {
-        auth.signOut()
+        viewModelScope.launch {
+            auth.signOut()
+            // Clear all local database tables
+            db.clearAllTables()
+        }
     }
 }

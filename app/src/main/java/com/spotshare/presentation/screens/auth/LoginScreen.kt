@@ -1,8 +1,9 @@
 package com.spotshare.presentation.screens.auth
 
-import androidx.compose.foundation.Image
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -12,16 +13,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.spotshare.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.spotshare.presentation.theme.Primary
 import com.spotshare.presentation.theme.Secondary
 import com.spotshare.presentation.theme.SpotShareTheme
@@ -55,6 +55,22 @@ fun LoginContent(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    // Google Sign In Launcher
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account.idToken?.let { onGoogleSignInClick(it) }
+            } catch (e: ApiException) {
+                // Handle error
+            }
+        }
+    }
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Success || authState is AuthState.RequiresOnboarding) {
@@ -66,7 +82,6 @@ fun LoginContent(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Gradient Background
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -133,7 +148,14 @@ fun LoginContent(
                     HorizontalDivider()
 
                     OutlinedButton(
-                        onClick = { /* Google Sign In Logic */ },
+                        onClick = {
+                            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                .requestIdToken("948162973311-66380cpgfndcsl5sccpntidrgh3r4e7m.apps.googleusercontent.com")
+                                .requestEmail()
+                                .build()
+                            val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Sign in with Google")

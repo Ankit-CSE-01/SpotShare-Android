@@ -13,7 +13,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager,
     private val alarmScheduler: AlarmScheduler,
-    private val auth: com.google.firebase.auth.FirebaseAuth
+    private val auth: com.google.firebase.auth.FirebaseAuth,
+    private val db: com.spotshare.data.local.database.AppDatabase
 ) : ViewModel() {
 
     val darkTheme: Flow<Boolean> = preferencesManager.darkTheme
@@ -43,6 +44,9 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun logout() {
-        auth.signOut()
+        viewModelScope.launch {
+            auth.signOut()
+            db.clearAllTables()
+        }
     }
 }
