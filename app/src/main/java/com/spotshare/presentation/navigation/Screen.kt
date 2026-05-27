@@ -22,6 +22,7 @@ sealed class Screen(val route: String) {
     }
     object CreatePost : Screen("create_post")
     object MediaPicker : Screen("media_picker")
+    object LocationPicker : Screen("location_picker")
     object CreateStory : Screen("create_story")
     object ChatList : Screen("chat_list")
     object Chat : Screen("chat/{chatId}") {

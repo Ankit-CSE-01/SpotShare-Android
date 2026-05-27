@@ -9,6 +9,7 @@ import com.spotshare.domain.model.Location
 import com.spotshare.domain.model.MediaType
 import com.spotshare.domain.model.Post
 import com.spotshare.domain.repository.PostRepository
+import com.spotshare.util.LocationHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class CreateViewModel @Inject constructor(
     private val postRepository: PostRepository,
     private val auth: FirebaseAuth,
+    private val locationHelper: LocationHelper,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -42,6 +44,16 @@ class CreateViewModel @Inject constructor(
                 savedStateHandle["selected_media"] = null
             }
             .launchIn(viewModelScope)
+
+        // Observe picked location from Map via SavedStateHandle
+        savedStateHandle.getStateFlow<List<Double>?>("picked_location", null)
+            .onEach { coords ->
+                coords?.let { (lat, lng) ->
+                    setMapLocation(lat, lng)
+                }
+                savedStateHandle["picked_location"] = null
+            }
+            .launchIn(viewModelScope)
     }
 
     fun addMedia(uri: Uri, type: MediaType) {
@@ -56,6 +68,23 @@ class CreateViewModel @Inject constructor(
 
     fun setLocation(name: String) {
         _selectedLocation.value = name
+    }
+
+    fun fetchCurrentLocation() {
+        viewModelScope.launch {
+            val location = locationHelper.getCurrentLocation()
+            if (location != null) {
+                val address = locationHelper.getAddressFromLocation(location.latitude, location.longitude)
+                _selectedLocation.value = address ?: "Unknown Location"
+            }
+        }
+    }
+
+    fun setMapLocation(lat: Double, lng: Double) {
+        viewModelScope.launch {
+            val address = locationHelper.getAddressFromLocation(lat, lng)
+            _selectedLocation.value = address ?: "Picked Spot"
+        }
     }
 
     fun uploadPost(caption: String, rating: Float?) {

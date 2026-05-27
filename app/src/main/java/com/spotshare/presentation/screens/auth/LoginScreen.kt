@@ -67,7 +67,7 @@ fun LoginContent(
                 val account = task.getResult(ApiException::class.java)
                 account.idToken?.let { onGoogleSignInClick(it) }
             } catch (e: ApiException) {
-                // Handle error
+                android.util.Log.e("LoginScreen", "Google Sign-In failed: code=${e.statusCode}, message=${e.message}")
             }
         }
     }
@@ -150,7 +150,7 @@ fun LoginContent(
                     OutlinedButton(
                         onClick = {
                             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                .requestIdToken("948162973311-66380cpgfndcsl5sccpntidrgh3r4e7m.apps.googleusercontent.com")
+                                .requestIdToken("94816297331-9dgvsh35qu060rco81u4v8rvkbim7no4.apps.googleusercontent.com")
                                 .requestEmail()
                                 .build()
                             val googleSignInClient = GoogleSignIn.getClient(context, gso)

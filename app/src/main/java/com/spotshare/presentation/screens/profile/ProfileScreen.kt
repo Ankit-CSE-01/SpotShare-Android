@@ -155,10 +155,12 @@ fun ProfileContent(
                     Text(text = user.bio, fontSize = 14.sp, lineHeight = 18.sp)
                 }
                 
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
-                    Icon(Icons.Default.Place, null, modifier = Modifier.size(14.dp), tint = Color.Gray)
-                    Spacer(Modifier.width(2.dp))
-                    Text(text = "New York, USA", color = Color.Gray, fontSize = 13.sp)
+                user?.location?.let { loc ->
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                        Icon(Icons.Default.Place, null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                        Spacer(Modifier.width(2.dp))
+                        Text(text = loc, color = Color.Gray, fontSize = 13.sp)
+                    }
                 }
 
                 if (user?.website != null) {

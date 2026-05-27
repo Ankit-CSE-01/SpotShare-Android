@@ -7,9 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,39 +23,55 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.spotshare.domain.model.User
 import com.spotshare.presentation.theme.SpotShareTheme
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
 @Composable
 fun EditProfileScreen(
     onBackClick: () -> Unit,
     onSaveSuccess: () -> Unit,
+    onPickOnMap: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
+    val isLocationLoading by viewModel.locationLoading.collectAsState()
     
     EditProfileContent(
         user = user,
+        isLocationLoading = isLocationLoading,
         onBackClick = onBackClick,
-        onSaveClick = { name, username, bio, website -> 
-            viewModel.updateProfile(name, username, bio, website)
+        onPickOnMap = onPickOnMap,
+        onFetchLocation = { viewModel.fetchCurrentLocation(it) },
+        onSaveClick = { name, username, bio, website, location -> 
+            viewModel.updateProfile(name, username, bio, website, location)
             onSaveSuccess() 
         }
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun EditProfileContent(
     user: User?,
+    isLocationLoading: Boolean,
     onBackClick: () -> Unit,
-    onSaveClick: (String, String, String, String) -> Unit
+    onPickOnMap: () -> Unit,
+    onFetchLocation: ((String) -> Unit) -> Unit,
+    onSaveClick: (String, String, String, String, String?) -> Unit
 ) {
     var name by remember { mutableStateOf(user?.displayName ?: "") }
     var username by remember { mutableStateOf(user?.userName ?: "") }
-    var pronouns by remember { mutableStateOf("") }
-    var showPronouns by remember { mutableStateOf(false) }
     var bio by remember { mutableStateOf(user?.bio ?: "") }
     var website by remember { mutableStateOf(user?.website ?: "") }
+    var location by remember { mutableStateOf(user?.location ?: "") }
     var gender by remember { mutableStateOf("Male") }
+
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
 
     var showPhotoSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
@@ -73,7 +87,7 @@ fun EditProfileContent(
                 },
                 actions = {
                     IconButton(onClick = { 
-                        onSaveClick(name, username, bio, website)
+                        onSaveClick(name, username, bio, website, if(location.isBlank()) null else location)
                     }) {
                         Icon(Icons.Default.Check, "Save", tint = MaterialTheme.colorScheme.primary)
                     }
@@ -111,16 +125,7 @@ fun EditProfileContent(
             // Form Fields
             EditField(label = "Name", value = name, onValueChange = { name = it })
             EditField(label = "Username", value = username, onValueChange = { username = it }, helperText = "Usernames can only contain letters, numbers, underscores and periods.")
-            EditField(label = "Pronouns", value = pronouns, onValueChange = { pronouns = it })
             
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(checked = showPronouns, onCheckedChange = { showPronouns = it })
-                Text("Show on profile", fontSize = 14.sp)
-            }
-
             EditField(
                 label = "Bio", 
                 value = bio, 
@@ -131,6 +136,43 @@ fun EditProfileContent(
             )
 
             EditField(label = "Links", value = website, onValueChange = { website = it }, isLink = true)
+
+            // Location Section
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = "Location", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                TextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.LightGray,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    placeholder = { Text("Where are you based?") },
+                    trailingIcon = {
+                        Row {
+                            if (isLocationLoading) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                IconButton(onClick = { 
+                                    if (locationPermissionState.allPermissionsGranted) {
+                                        onFetchLocation { location = it }
+                                    } else {
+                                        locationPermissionState.launchMultiplePermissionRequest()
+                                    }
+                                }) {
+                                    Icon(Icons.Default.MyLocation, "My Location", tint = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                            IconButton(onClick = onPickOnMap) {
+                                Icon(Icons.Default.Map, "Pick on Map", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    }
+                )
+            }
 
             ListItem(
                 headlineContent = { Text("Gender", fontSize = 14.sp, color = Color.Gray) },
@@ -259,8 +301,11 @@ fun EditProfileScreenPreview() {
     SpotShareTheme {
         EditProfileContent(
             user = null,
+            isLocationLoading = false,
             onBackClick = {},
-            onSaveClick = { _, _, _, _ -> }
+            onPickOnMap = {},
+            onFetchLocation = {},
+            onSaveClick = { _, _, _, _, _ -> }
         )
     }
 }

@@ -24,7 +24,7 @@ import com.spotshare.presentation.screens.chat.ChatScreen
 import com.spotshare.presentation.screens.story.StoryViewScreen
 import com.spotshare.presentation.screens.story.CreateStoryScreen
 import com.spotshare.presentation.screens.create.CreatePostScreen
-import com.spotshare.presentation.screens.create.MediaPickerScreen
+import com.spotshare.presentation.screens.create.LocationPickerMapScreen
 import com.spotshare.presentation.screens.reels.CreateReelScreen
 import com.spotshare.presentation.screens.profile.EditProfileScreen
 import com.spotshare.presentation.screens.notifications.NotificationScreen
@@ -140,21 +140,18 @@ fun NavGraph(
                         popUpTo(Screen.Feed.route) { inclusive = true }
                     }
                 },
-                onCameraClick = {
-                    navController.navigate(Screen.CreateStory.route)
-                },
-                onOpenGallery = {
-                    navController.navigate(Screen.MediaPicker.route)
+                onPickOnMap = {
+                    navController.navigate(Screen.LocationPicker.route)
                 }
             )
         }
-        composable(route = Screen.MediaPicker.route) {
-            MediaPickerScreen(
+        composable(route = Screen.LocationPicker.route) {
+            LocationPickerMapScreen(
                 onBackClick = { navController.popBackStack() },
-                onMediaSelected = { uris ->
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set("selected_media", uris.map { it.toString() })
+                onLocationSelected = { latLng ->
+                    // This is a bit tricky since we need to pass back to CreatePost
+                    // We'll use the same savedStateHandle pattern as MediaPicker
+                    navController.previousBackStackEntry?.savedStateHandle?.set("picked_location", listOf(latLng.latitude, latLng.longitude))
                     navController.popBackStack()
                 }
             )
@@ -199,7 +196,10 @@ fun NavGraph(
         composable(route = Screen.EditProfile.route) {
             EditProfileScreen(
                 onBackClick = { navController.popBackStack() },
-                onSaveSuccess = { navController.popBackStack() }
+                onSaveSuccess = { navController.popBackStack() },
+                onPickOnMap = {
+                    navController.navigate(Screen.LocationPicker.route)
+                }
             )
         }
         composable(route = Screen.ChatList.route) {
